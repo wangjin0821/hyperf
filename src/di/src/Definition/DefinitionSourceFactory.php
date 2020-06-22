@@ -7,9 +7,8 @@ declare(strict_types=1);
  * @link     https://www.hyperf.io
  * @document https://doc.hyperf.io
  * @contact  group@hyperf.io
- * @license  https://github.com/hyperf-cloud/hyperf/blob/master/LICENSE
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
-
 namespace Hyperf\Di\Definition;
 
 use Hyperf\Config\ProviderConfig;
@@ -48,24 +47,11 @@ class DefinitionSourceFactory
         }
 
         $serverDependencies = $configFromProviders['dependencies'] ?? [];
-        if (file_exists($configDir . '/dependencies.php')) {
-            $definitions = include $configDir . '/dependencies.php';
-            $serverDependencies = array_replace($serverDependencies, $definitions['dependencies'] ?? []);
+        if (file_exists($configDir . '/autoload/dependencies.php')) {
+            $definitions = include $configDir . '/autoload/dependencies.php';
+            $serverDependencies = array_replace($serverDependencies, $definitions ?? []);
         }
 
-        $scanDirs = $configFromProviders['scan']['paths'] ?? [];
-        $ignoreAnnotations = [];
-        $collectors = $configFromProviders['scan']['collectors'] ?? [];
-
-        if (file_exists($configDir . '/autoload/annotations.php')) {
-            $annotations = include $configDir . '/autoload/annotations.php';
-            $scanDirs = array_merge($scanDirs, $annotations['scan']['paths'] ?? []);
-            $ignoreAnnotations = $annotations['scan']['ignore_annotations'] ?? [];
-            $collectors = array_merge($collectors, $annotations['scan']['collectors'] ?? []);
-        }
-
-        $scanConfig = new ScanConfig($scanDirs, $ignoreAnnotations, $collectors);
-
-        return new DefinitionSource($serverDependencies, $scanConfig, $this->enableCache);
+        return new DefinitionSource($serverDependencies);
     }
 }

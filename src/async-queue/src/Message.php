@@ -7,9 +7,8 @@ declare(strict_types=1);
  * @link     https://www.hyperf.io
  * @document https://doc.hyperf.io
  * @contact  group@hyperf.io
- * @license  https://github.com/hyperf-cloud/hyperf/blob/master/LICENSE
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
-
 namespace Hyperf\AsyncQueue;
 
 use Hyperf\Contract\CompressInterface;
@@ -19,7 +18,7 @@ use Serializable;
 class Message implements MessageInterface, Serializable
 {
     /**
-     * @var JobInterface
+     * @var CompressInterface|JobInterface|UnCompressInterface
      */
     protected $job;
 
@@ -44,6 +43,11 @@ class Message implements MessageInterface, Serializable
             return true;
         }
         return false;
+    }
+
+    public function getAttempts(): int
+    {
+        return $this->attempts;
     }
 
     public function serialize()

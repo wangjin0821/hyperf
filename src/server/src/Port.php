@@ -7,9 +7,8 @@ declare(strict_types=1);
  * @link     https://www.hyperf.io
  * @document https://doc.hyperf.io
  * @contact  group@hyperf.io
- * @license  https://github.com/hyperf-cloud/hyperf/blob/master/LICENSE
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
-
 namespace Hyperf\Server;
 
 class Port
@@ -144,7 +143,7 @@ class Port
 
     private static function filter(array $config): array
     {
-        if ((int) $config['type'] === ServerInterface::SERVER_TCP) {
+        if ((int) $config['type'] === ServerInterface::SERVER_BASE) {
             $default = [
                 'open_http2_protocol' => false,
                 'open_http_protocol' => false,

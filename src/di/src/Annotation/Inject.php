@@ -7,13 +7,15 @@ declare(strict_types=1);
  * @link     https://www.hyperf.io
  * @document https://doc.hyperf.io
  * @contact  group@hyperf.io
- * @license  https://github.com/hyperf-cloud/hyperf/blob/master/LICENSE
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
-
 namespace Hyperf\Di\Annotation;
 
-use Hyperf\Di\ReflectionManager;
-use PhpDocReader\PhpDocReader;
+use Hyperf\Di\BetterReflectionManager;
+use Hyperf\Di\Exception;
+use Hyperf\Di\TypesFinderManager;
+use PhpDocReader\AnnotationException;
+use phpDocumentor\Reflection\Types\Object_;
 
 /**
  * @Annotation
@@ -27,19 +29,52 @@ class Inject extends AbstractAnnotation
     public $value;
 
     /**
-     * @var PhpDocReader
+     * @var bool
      */
-    private $docReader;
+    public $required = true;
+
+    /**
+     * @var bool
+     */
+    public $lazy = false;
 
     public function __construct($value = null)
     {
         parent::__construct($value);
-        $this->docReader = make(PhpDocReader::class);
     }
 
     public function collectProperty(string $className, ?string $target): void
     {
-        $this->value = $this->docReader->getPropertyClass(ReflectionManager::reflectClass($className)->getProperty($target));
-        AnnotationCollector::collectProperty($className, $target, static::class, $this);
+        try {
+            $reflectionClass = BetterReflectionManager::reflectClass($className);
+            $properties = $reflectionClass->getImmediateProperties();
+            $reflectionProperty = $properties[$target] ?? null;
+            if (! $reflectionProperty) {
+                $this->value = '';
+                return;
+            }
+            if ($reflectionProperty->hasType()) {
+                $this->value = $reflectionProperty->getType()->getName();
+            } else {
+                $reflectionTypes = TypesFinderManager::getPropertyFinder()->__invoke($reflectionProperty, $reflectionClass->getDeclaringNamespaceAst());
+                if (isset($reflectionTypes[0]) && $reflectionTypes[0] instanceof Object_) {
+                    $this->value = ltrim((string) $reflectionTypes[0], '\\');
+                }
+            }
+
+            if (empty($this->value)) {
+                throw new Exception\AnnotationException("The @Inject value is invalid for {$className}->{$target}");
+            }
+
+            if ($this->lazy) {
+                $this->value = 'HyperfLazy\\' . $this->value;
+            }
+            AnnotationCollector::collectProperty($className, $target, static::class, $this);
+        } catch (AnnotationException $e) {
+            if ($this->required) {
+                throw $e;
+            }
+            $this->value = '';
+        }
     }
 }

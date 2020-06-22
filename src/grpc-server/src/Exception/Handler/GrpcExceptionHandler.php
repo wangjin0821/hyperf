@@ -7,9 +7,8 @@ declare(strict_types=1);
  * @link     https://www.hyperf.io
  * @document https://doc.hyperf.io
  * @contact  group@hyperf.io
- * @license  https://github.com/hyperf-cloud/hyperf/blob/master/LICENSE
+ * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
-
 namespace Hyperf\GrpcServer\Exception\Handler;
 
 use Hyperf\Contract\StdoutLoggerInterface;
@@ -17,7 +16,6 @@ use Hyperf\ExceptionHandler\ExceptionHandler;
 use Hyperf\ExceptionHandler\Formatter\FormatterInterface;
 use Hyperf\Grpc\StatusCode;
 use Hyperf\GrpcServer\Exception\GrpcException;
-use Hyperf\Server\Exception\ServerException;
 use Psr\Http\Message\ResponseInterface;
 use Throwable;
 
@@ -64,8 +62,9 @@ class GrpcExceptionHandler extends ExceptionHandler
             ->withAddedHeader('trailer', 'grpc-status, grpc-message')
             ->withStatus(StatusCode::HTTP_CODE_MAPPING[$code] ?? 500);
 
-        $response->getSwooleResponse()->trailer('grpc-status', (string) $code);
-        $response->getSwooleResponse()->trailer('grpc-message', (string) $message);
+        if (method_exists($response, 'withTrailer')) {
+            $response = $response->withTrailer('grpc-status', (string) $code)->withTrailer('grpc-message', (string) $message);
+        }
 
         return $response;
     }
